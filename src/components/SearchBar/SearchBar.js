@@ -1,48 +1,42 @@
-import { Component } from 'react';
 import {
   Searchbar,
   SearchForm,
   SearchFormButton,
-  SearchFormButtonSpan,
   SearchFormInput,
 } from './SearchBar.styled';
+import { AiOutlineSearch } from 'react-icons/ai';
 
-export class SearchBar extends Component {
-  state = {
-    inputData: '',
-  };
-  onChangeInput = e => {
-    this.setState({ inputData: e.currentTarget.value.toLowerCase() });
-  };
-
-  handleSubmit = e => {
+export const SearchBar = ({ onSubmit }) => {
+  const handleSubmit = e => {
     e.preventDefault();
-    this.props.onSubmit(this.state.inputData);
-    this.setState({
-      inputData: '',
-    });
+
+    const inputValue = `${Date.now()}/${e.target.elements.query.value.trim()}`;
+    const sliced = inputValue.split('/');
+    const query = sliced[1];
+
+    if (!query) {
+      return;
+    }
+
+    onSubmit(query);
+
+    e.target.reset();
   };
 
-  render() {
-    const inputData = this.state.inputData;
-    return (
-      <Searchbar>
-        <SearchForm onSubmit={this.handleSubmit}>
-          <SearchFormButton type="submit">
-            <SearchFormButtonSpan>Search</SearchFormButtonSpan>
-          </SearchFormButton>
-
-          <SearchFormInput
-            onChange={this.onChangeInput}
-            name="inputData"
-            value={inputData}
-            type="text"
-            autoComplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-          />
-        </SearchForm>
-      </Searchbar>
-    );
-  }
-}
+  return (
+    <Searchbar>
+      <SearchForm className="form" onSubmit={handleSubmit}>
+        <SearchFormInput
+          type="text"
+          name="query"
+          autoComplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+        />
+        <SearchFormButton type="submit">
+          <AiOutlineSearch size={20} />
+        </SearchFormButton>
+      </SearchForm>
+    </Searchbar>
+  );
+};

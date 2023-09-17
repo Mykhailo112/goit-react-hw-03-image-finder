@@ -32,8 +32,6 @@ export const SearchFormButton = styled.button`
   width: 48px;
   height: 48px;
   border: 0;
-  background-image: url('https://image.flaticon.com/icons/svg/149/149852.svg');
-  background-size: 40%;
   background-repeat: no-repeat;
   background-position: center;
   opacity: 0.6;
@@ -46,8 +44,8 @@ export const SearchFormButton = styled.button`
 `;
 export const SearchFormButtonSpan = styled.span`
   position: absolute;
-  width: 1px;
-  height: 1px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);

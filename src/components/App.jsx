@@ -1,100 +1,110 @@
 import { Component } from 'react';
-// import axios from 'axios';
 import { fetchImages } from './API/api.js';
 import { ButtonLoadMore } from './Button/Button.js';
 import { SearchBar } from './SearchBar/SearchBar.js';
 import { ImageGallery } from './ImageGallery/ImageGallery.js';
 import { Loader } from './Loader/Loader.js';
-// import { ImageGalleryItem } from './ImageGalleryItem/ImageGalleryItem.js';
-
-let page = 1;
+import { ErrorMsg } from './App.styled.js';
 
 export class App extends Component {
   state = {
-    inputData: '',
-    items: [],
-
-    status: 'idle',
-    totalHits: 0,
+    query: '',
+    error: false,
+    loading: false,
+    prevQuery: '',
+    images: [],
+    page: 1,
+    showLoadMoreButton: true,
+    searchFailed: false,
   };
 
-  handleSubmit = async inputData => {
-    page = 1;
-    if (inputData.trim() === '') {
-      console.log('You cannot search by empty field, try again.');
-      return;
-    } else {
+  async componentDidUpdate(prevProps, prevState) {
+    const { query, page } = this.state;
+
+    if (prevState.query !== query || prevState.page !== page) {
       try {
-        this.setState({ status: 'pending' });
-        const { totalHits, hits } = await fetchImages(inputData, page);
-        if (hits.length < 1) {
-          this.setState({ status: 'idle' });
-          console.log(
-            'Sorry, there are no images matching your search query. Please try again.'
-          );
-        } else {
+        this.setState({ loading: true, error: false });
+
+        const { hits, totalHits } = await fetchImages(query, page);
+
+        const filteredNeedsValues = () => {
+          this.setState(prevState => ({
+            images: [
+              ...prevState.images,
+              ...hits.map(image => ({
+                id: image.id,
+                largeImageURL: image.largeImageURL,
+                webformatURL: image.webformatURL,
+                tags: image.tags,
+              })),
+            ],
+            showLoadMoreButton: false,
+          }));
+        };
+
+        if (page === Math.ceil(totalHits / 12)) {
+          filteredNeedsValues();
+          return;
+        }
+
+        if (hits.length === 0) {
           this.setState({
-            items: hits,
-            inputData,
-            totalHits: totalHits,
-            status: 'resolved',
+            searchFailed: true,
           });
         }
+
+        filteredNeedsValues();
+        this.setState({
+          showLoadMoreButton: true,
+        });
       } catch (error) {
-        this.setState({ status: 'rejected' });
+        console.log(error);
+        this.setState({
+          error: true,
+        });
+      } finally {
+        this.setState({ loading: false });
       }
     }
-  };
-  onNextPage = async () => {
-    this.setState({ status: 'pending' });
+  }
 
-    try {
-      const { hits } = await fetchImages(this.state.inputData, (page += 1));
-      this.setState(prevState => ({
-        items: [...prevState.items, ...hits],
-        status: 'resolved',
-      }));
-    } catch (error) {
-      this.setState({ status: 'rejected' });
-    }
+  handleSubmit = query => {
+    this.setState({
+      prevQuery: this.state.query,
+      query: query,
+      images: [],
+      page: 1,
+      error: false,
+    });
   };
+
+  handleLoadMore = () => {
+    this.setState(prevState => ({
+      page: prevState.page + 1,
+    }));
+  };
+
   render() {
-    const { totalHits, status, items } = this.state;
-    if (status === 'idle') {
-      return (
-        <div className="App">
-          <SearchBar onSubmit={this.handleSubmit} />
-        </div>
-      );
-    }
-    if (status === 'pending') {
-      return (
-        <div className="App">
-          <SearchBar onSubmit={this.handleSubmit} />
-          <ImageGallery page={page} items={this.state.items} />
-          <Loader />
-          {totalHits > 12 && <ButtonLoadMore onClick={this.onNextPage} />}
-        </div>
-      );
-    }
-    if (status === 'rejected') {
-      return (
-        <div className="App">
-          <SearchBar onSubmit={this.handleSubmit} />
-          <p>Something wrong, try later</p>
-        </div>
-      );
-    }
-    if (status === 'resolved') {
-      return (
-        <div className="App">
-          <SearchBar onSubmit={this.handleSubmit} />
-          <ImageGallery page={page} items={this.state.items} />
-          {totalHits > 12 && totalHits > items.length && (
-            <ButtonLoadMore onClick={this.onNextPage} />
-          )}
-        </div>
-      );
-    }
+    const { images, loading, error, showLoadMoreButton, searchFailed } =
+      this.state;
+
+    return (
+      <div>
+        <SearchBar onSubmit={this.handleSubmit} />
+        {loading && <Loader />}
+        {images.length > 0 && <ImageGallery hits={images} />}
+        {searchFailed && images.length === 0 && !loading && (
+          <ErrorMsg>
+            Such images was not found, try find something else 😉
+          </ErrorMsg>
+        )}
+        {error && !loading && (
+          <ErrorMsg>❌ Something went wrong,try reload page</ErrorMsg>
+        )}
+        {images.length > 0 && showLoadMoreButton && !loading && (
+          <ButtonLoadMore loadMore={this.handleLoadMore} />
+        )}
+      </div>
+    );
   }
 }

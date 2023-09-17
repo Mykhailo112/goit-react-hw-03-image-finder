@@ -1,5 +1,11 @@
-import { Button } from './Button.styled.js';
+import { BtnWrapper, LoadMoreBtn } from './Button.styled.js';
 
-export const ButtonLoadMore = ({ onClick }) => {
-  return <Button onClick={onClick}>Load more</Button>;
+export const ButtonLoadMore = ({ loadMore }) => {
+  return (
+    <BtnWrapper>
+      <LoadMoreBtn onClick={loadMore} type="button">
+        Load more
+      </LoadMoreBtn>
+    </BtnWrapper>
+  );
 };
